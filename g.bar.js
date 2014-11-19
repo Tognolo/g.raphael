@@ -170,17 +170,19 @@
         var chartinst = this,
             type = opts.type || "square",
             gutter = parseFloat(opts.gutter || "20%"),
+            txtattr = opts.txtattr || { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
             chart = paper.set(),
             bars = paper.set(),
             covers = paper.set(),
             covers2 = paper.set(),
-            total = Math.max.apply(Math, values),
+            total = Math.max.apply(Math, values),       // Max value over the serie(s); if stacked, is the maximum of the sums of the single max
             stacktotal = [],
-            multi = 0,
+            multi = 0,                                  // Sub-arrays number
             colors = opts.colors || chartinst.colors,
             len = values.length;
 
         if (Raphael.is(values[0], "array")) {
+            // If values is multiarray, save the sub-arrays' count and get the longest sub-array's length
             total = [];
             multi = len;
             len = 0;
@@ -316,16 +318,19 @@
             var L, l = -Infinity;
 
             if (opts.stacked) {
+                // Loop over the bars
                 for (var i = 0; i < len; i++) {
                     var tot = 0;
 
+                    // Loop over the multi-array series
                     for (var j = 0; j < (multi || 1); j++) {
                         tot += multi ? values[j][i] : values[i];
 
-                        if (j == multi - 1) {
-                            var label = paper.labelise(labels[i], tot, total);
+                        if ((multi && j == multi - 1) || !multi) {
+                            var label = chartinst.labelise(labels[i], tot, total);
 
-                            L = paper.text(bars[i * (multi || 1) + j].x, y + height - barvgutter / 2, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
+                            // If there are multibars, the bars array is a multiarray
+                            L = paper.text(multi ? bars[0][i].x : bars[i].x, y + height - barvgutter / 2, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
 
                             var bb = L.getBBox();
 
@@ -341,7 +346,7 @@
             } else {
                 for (var i = 0; i < len; i++) {
                     for (var j = 0; j < (multi || 1); j++) {
-                        var label = paper.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
+                        var label = chartinst.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
 
                         L = paper.text(bars[i * (multi || 1) + j].x, isBottom ? y + height - barvgutter / 2 : bars[i * (multi || 1) + j].y - 10, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
 
