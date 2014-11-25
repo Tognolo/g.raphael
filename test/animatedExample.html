@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>g·Raphaël Static Bar Charts</title>
+        <link rel="stylesheet" href="css/demo.css" type="text/css" media="screen" charset="utf-8">
+        <link rel="stylesheet" href="css/demo-print.css" type="text/css" media="print" charset="utf-8">
+        <script src="../raphael-min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../g.raphael.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../g.bar.js" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript" charset="utf-8">
+            window.onload = function () {
+            	var r = Raphael("holder"),
+            		start = (new Date).getTime();
+            	
+            	draw(start);
+            	function draw(t){
+                	r.clear();
+                    var txtattr = { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
+                    	data = [];
+
+                    fin = function () {
+                        this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
+                    },
+                    fout = function () {
+                        this.flag.animate({opacity: 0}, 300, function () {this.remove();});
+                    };
+                    offset = 2 * Math.PI * (t - start) / 10000;
+	                for (i = 0; i < 4 * Math.PI; i += 0.1) {
+			          data.push(Math.sin(i - offset)+1);
+			        }
+	                
+	                r.text(320, 10, "Stacked bar with axis").attr(txtattr);
+	                
+	                r.barchart(10, 10, 620, 460, [data], {
+	                    stacked: true, 
+	                    stretch: true, 
+	                    axis: "0 0 0 0", 
+	                    gutter: "0",
+	                    vgutter: "20",
+	                    axisxstep: 1
+	                }).hover(fin, fout);
+                	setTimeout(function () {draw((new Date).getTime());}, 1);
+                }
+            };
+        </script>
+    </head>
+    <body class="raphael" id="g.raphael.dmitry.baranovskiy.com">
+        <div id="holder"></div>
+        <p>
+            Demo of <a href="http://g.raphaeljs.com/">g·Raphaël</a> JavaScript library. Simone Tognolo edited version.
+        </p>
+    </body>
+</html>
