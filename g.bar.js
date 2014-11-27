@@ -157,6 +157,16 @@
  o stacked (boolean) whether or not to tread values as in a stacked bar chart
  o to
  o stretch (boolean)
+ o axis: {
+ o   x: {
+ o       visible: (boolean),
+ o       labels: (array)
+ o   }, 
+ o   y: {
+ o       visible: (boolean),
+ o       labelWidth: (integer)
+ o   }
+}
  o }
  **
  = (object) path element of the popup
@@ -173,14 +183,24 @@
             txtattr = opts.txtattr || { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
             chart = paper.set(),
             bars = paper.set(),
+            axis = paper.set(),
             covers = paper.set(),
             covers2 = paper.set(),
-            total = Math.max.apply(Math, values),       // Max value over the serie(s); if stacked, is the maximum of the sums of the single max
+            // Max value over the serie(s); if stacked, is the maximum of the sums of the single max
+            total = Math.max.apply(Math, values),       
             stacktotal = [],
-            multi = 0,                                  // Sub-arrays number
+            // Sub-arrays number
+            multi = 0,                                  
             colors = opts.colors || chartinst.colors,
-            len = values.length;
+            // Space for Y axis and labels
+            axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth || 15 : 0, 
+            // Data length
+            len = values.length;                        
 
+
+        //////////////////////
+        // Calculate params //
+        //////////////////////
         if (Raphael.is(values[0], "array")) {
             // If values is multiarray, save the sub-arrays' count and get the longest sub-array's length
             total = [];
@@ -218,11 +238,11 @@
         
         total = (opts.to) || total;
 
-        var barwidth = width / (len * (100 + gutter) + gutter) * 100,
+        var barwidth = (width - axisy_space) / (len * (100 + gutter) + gutter) * 100,
             barhgutter = barwidth * gutter / 100,
             barvgutter = opts.vgutter == null ? 20 : opts.vgutter,
             stack = [],
-            X = x + barhgutter,
+            X = x + barhgutter + axisy_space,
             Y = (height - 2 * barvgutter) / total;
 
         if (!opts.stretch) {
@@ -232,6 +252,51 @@
 
         !opts.stacked && (barwidth /= multi || 1);
 
+
+        ///////////////
+        // Draw axis //
+        ///////////////
+        if (opts.axis.x.visible) {
+            // Check if label array exist, and create a "spaced" version
+            var labelsExist = typeof opts.axis.x.labels != 'undefined' && opts.axis.x.labels instanceof Array;
+            if (labelsExist) {
+                var labelArraySpaced = [" "]
+                for (var i = 0; i < opts.axis.x.labels.length; i++) {
+                    labelArraySpaced.push(opts.axis.x.labels[i]);
+                    labelArraySpaced.push(" ");
+                };
+            }
+            axis.push(chartinst.axis(
+                X - 0.5 * barhgutter,                   // x
+                y + height - barvgutter,                // y
+                width - 1 * barhgutter - axisy_space,   // length
+                0,                                      // from
+                len,                                    // to
+                (labelsExist ? opts.axis.x.labels.length : opts.axis.x.step || len) * 2,        // steps
+                0,                                      // orientation
+                labelsExist ? labelArraySpaced : [],    // labels,
+                "t",
+                0,
+                paper                                   // paper
+            ));
+        }
+        if (opts.axis.y.visible) {
+            axis.push(chartinst.axis(
+                X - 0.5 * barhgutter, 
+                y + height - barvgutter, 
+                height - 2 * barvgutter, 
+                0, 
+                total, 
+                opts.axisystep || Math.floor((height - 2 * gutter) / 20), 
+                1, 
+                paper
+            ));
+        }
+
+
+        ///////////////////
+        // Draw the bars //
+        ///////////////////
         for (var i = 0; i < len; i++) {
             stack = [];
 
@@ -419,10 +484,9 @@
             return this;
         };
 
-        chart.push(bars, covers, covers2, axis);
+        chart.push(bars, covers, covers2);
         chart.bars = bars;
         chart.covers = covers;
-        chart.axis = axis;
         return chart;
     };
     
