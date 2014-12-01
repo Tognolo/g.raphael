@@ -135,6 +135,25 @@
         }
     }
 
+    /**
+     *  Courtesy of Stack Overflow
+     *  Given a series of objects, return a merged object 
+     */
+    var merge = function() {
+        var obj = {},
+            i = 0,
+            il = arguments.length,
+            key;
+        for (; i < il; i++) {
+            for (key in arguments[i]) {
+                if (arguments[i].hasOwnProperty(key)) {
+                    obj[key] = arguments[i][key];
+                }
+            }
+        }
+        return obj;
+    };
+
 /*\
  * Paper.vbarchart
  [ method ]
@@ -151,7 +170,7 @@
  - opts (object) options for the chart
  o {
  o type (string) type of endings of the bar. Default: 'square'. Other options are: 'round', 'sharp', 'soft'.
- o gutter (number)(string) default '20%' (WHAT DOES IT DO?)
+ o gutter (number)(string) the space between columns
  o vgutter (number)
  o colors (array) colors be used repeatedly to plot the bars. If multicolumn bar is used each sequence of bars with use a different color.
  o stacked (boolean) whether or not to tread values as in a stacked bar chart
@@ -175,12 +194,33 @@
  \*/
  
     function VBarchart(paper, x, y, width, height, values, opts) {
-        opts = opts || {};
+
+        // Default values for the options 
+        var optsDefault = {
+            stacked: false, 
+            stretch: false, 
+            type: "square",
+            txtattr: { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
+            colors: chartinst.colors,
+            axis: {
+                x: {
+                    visible: false,
+                    labels: []
+                }, 
+                y: {
+                    visible: false,
+                    labelWidth: 15
+                }
+            },
+            gutter: "20%",
+            vgutter: "20"
+        };
+
+        // Merge & fix options data
+        opts = merge(optsDefault, opts);
+        opts.gutter = parseFloat(opts.gutter)
 
         var chartinst = this,
-            type = opts.type || "square",
-            gutter = parseFloat(opts.gutter || "20%"),
-            txtattr = opts.txtattr || { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
             chart = paper.set(),
             bars = paper.set(),
             axis = paper.set(),
@@ -191,7 +231,6 @@
             stacktotal = [],
             // Sub-arrays number
             multi = 0,                                  
-            colors = opts.colors || chartinst.colors,
             // Space for Y axis and labels
             axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth || 15 : 0, 
             // Data length
@@ -238,8 +277,8 @@
         
         total = (opts.to) || total;
 
-        var barwidth = (width - axisy_space) / (len * (100 + gutter) + gutter) * 100,
-            barhgutter = barwidth * gutter / 100,
+        var barwidth = (width - axisy_space) / (len * (100 + opts.gutter) + opts.gutter) * 100,
+            barhgutter = barwidth * opts.gutter / 100,
             barvgutter = opts.vgutter == null ? 20 : opts.vgutter,
             stack = [],
             X = x + barhgutter + axisy_space,
@@ -287,7 +326,7 @@
                 height - 2 * barvgutter, 
                 0, 
                 total, 
-                opts.axisystep || Math.floor((height - 2 * gutter) / 20), 
+                opts.axisystep || Math.floor((height - 2 * opts.gutter) / 20), 
                 1, 
                 paper
             ));
@@ -303,7 +342,7 @@
             for (var j = 0; j < (multi || 1); j++) {
                 var h = Math.round((multi ? values[j][i] : values[i]) * Y),
                     top = y + height - barvgutter - h,
-                    bar = finger(Math.round(X + barwidth / 2), top + h, barwidth, h, true, type, null, paper).attr({ stroke: "none", fill: colors[multi ? j : i] });
+                    bar = finger(Math.round(X + barwidth / 2), top + h, barwidth, h, true, opts.type, null, paper).attr({ stroke: "none", fill: opts.colors[multi ? j : i] });
 
                 if (multi) {
                     bars[j].push(bar);
@@ -340,7 +379,7 @@
                     var bar = stack[s],
                         cover,
                         h = (size + bar.value) * Y,
-                        path = finger(bar.x, y + height - barvgutter - !!size * .5, barwidth, h, true, type, 1, paper);
+                        path = finger(bar.x, y + height - barvgutter - !!size * .5, barwidth, h, true, opts.type, 1, paper);
 
                     cvr.bars.push(bar);
                     size && bar.attr({path: path});
@@ -399,7 +438,7 @@
                             var label = chartinst.labelise(labels[i], multi ? tot : values[i], total);
 
                             // If there are multibars, the bars array is a multiarray
-                            L = paper.text(multi ? bars[j][i].x : bars[i].x, isBottom ? y + height - barvgutter / 2 : multi ? bars[j][i].y : bars[i].y - 10, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
+                            L = paper.text(multi ? bars[j][i].x : bars[i].x, isBottom ? y + height - barvgutter / 2 : multi ? bars[j][i].y : bars[i].y - 10, label).attr(opts.txtattr).insertBefore(covers[i * (multi || 1) + j]);
 
                             var bb = L.getBBox();
 
@@ -419,7 +458,7 @@
                     for (var j = 0; j < (multi || 1); j++) {
                         var label = chartinst.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
 
-                        L = paper.text(multi ? bars[j][i].x : bars[i].x, isBottom ? y + height - barvgutter / 2 : multi ? bars[j][i].y : bars[i].y - 10, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
+                        L = paper.text(multi ? bars[j][i].x : bars[i].x, isBottom ? y + height - barvgutter / 2 : multi ? bars[j][i].y : bars[i].y - 10, label).attr(opts.txtattr).insertBefore(covers[i * (multi || 1) + j]);
 
                         var bb = L.getBBox();
 
