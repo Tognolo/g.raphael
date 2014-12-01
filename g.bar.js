@@ -201,7 +201,7 @@
             stretch: false, 
             type: "square",
             txtattr: { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
-            colors: chartinst.colors,
+            colors: this.colors,
             axis: {
                 x: {
                     visible: false,
@@ -227,7 +227,8 @@
             covers = paper.set(),
             covers2 = paper.set(),
             // Max value over the serie(s); if stacked, is the maximum of the sums of the single max
-            total = Math.max.apply(Math, values),       
+            valuesMax = Math.max(0, Math.max.apply(Math, values)),
+            valuesMin = Math.min(0, Math.min.apply(Math, values)),
             stacktotal = [],
             // Sub-arrays number
             multi = 0,                                  
@@ -242,13 +243,13 @@
         //////////////////////
         if (Raphael.is(values[0], "array")) {
             // If values is multiarray, save the sub-arrays' count and get the longest sub-array's length
-            total = [];
+            valuesMax = [];
             multi = len;
             len = 0;
 
             for (var i = values.length; i--;) {
                 bars.push(paper.set());
-                total.push(Math.max.apply(Math, values[i]));
+                valuesMax.push(Math.max.apply(Math, values[i]));
                 len = Math.max(len, values[i].length);
             }
 
@@ -272,17 +273,17 @@
                 }
             }
 
-            total = Math.max.apply(Math, opts.stacked ? stacktotal : total);
+            valuesMax = Math.max.apply(Math, opts.stacked ? stacktotal : valuesMax);
         }
         
-        total = (opts.to) || total;
+        valuesMax = (opts.to) || valuesMax;
 
         var barwidth = (width - axisy_space) / (len * (100 + opts.gutter) + opts.gutter) * 100,
             barhgutter = barwidth * opts.gutter / 100,
             barvgutter = opts.vgutter == null ? 20 : opts.vgutter,
             stack = [],
             X = x + barhgutter + axisy_space,
-            Y = (height - 2 * barvgutter) / total;
+            Y = (height - 2 * barvgutter) / valuesMax;
 
         if (!opts.stretch) {
             barhgutter = Math.round(barhgutter);
@@ -296,9 +297,10 @@
         // Draw axis //
         ///////////////
         if (opts.axis.x.visible) {
-            // Check if label array exist, and create a "spaced" version
-            var labelsExist = typeof opts.axis.x.labels != 'undefined' && opts.axis.x.labels instanceof Array;
-            if (labelsExist) {
+            // If label array exists (labelsExist) then add the necessary space
+            // and create a special array for labels
+            var labelsArrayExist = typeof opts.axis.x.labels != 'undefined' && opts.axis.x.labels instanceof Array;
+            if (labelsArrayExist) {
                 var labelArraySpaced = [" "]
                 for (var i = 0; i < opts.axis.x.labels.length; i++) {
                     labelArraySpaced.push(opts.axis.x.labels[i]);
@@ -306,28 +308,28 @@
                 };
             }
             axis.push(chartinst.axis(
-                X - 0.5 * barhgutter,                   // x
-                y + height - barvgutter,                // y
-                width - 1 * barhgutter - axisy_space,   // length
-                0,                                      // from
-                len,                                    // to
-                (labelsExist ? opts.axis.x.labels.length : opts.axis.x.step || len) * 2,        // steps
-                0,                                      // orientation
-                labelsExist ? labelArraySpaced : [],    // labels,
+                X - 0.5 * barhgutter,                       // x
+                y + height - barvgutter,                    // y
+                width - 1 * barhgutter - axisy_space,       // length
+                0,                                          // from
+                len,                                        // to
+                (labelsArrayExist ? opts.axis.x.labels.length : opts.axis.x.step || len) * 2,     // steps
+                0,                                          // orientation
+                labelsArrayExist ? labelArraySpaced : [],   // labels,
                 "t",
                 0,
-                paper                                   // paper
+                paper                                       // paper
             ));
         }
         if (opts.axis.y.visible) {
             axis.push(chartinst.axis(
-                X - 0.5 * barhgutter, 
-                y + height - barvgutter, 
-                height - 2 * barvgutter, 
-                0, 
-                total, 
-                opts.axisystep || Math.floor((height - 2 * opts.gutter) / 20), 
-                1, 
+                X - 0.5 * barhgutter,                       // x
+                y + height - barvgutter,                    // y
+                height - 2 * barvgutter,                    // length
+                0,                                          // from
+                valuesMax,                                  // to
+                opts.axisystep || Math.floor((height - 2 * opts.gutter) / 20),  // steps
+                1,                                          // orientation
                 paper
             ));
         }
@@ -435,7 +437,7 @@
                         tot += multi ? values[j][i] : values[i];
 
                         if ((multi && j == multi - 1) || !multi) {
-                            var label = chartinst.labelise(labels[i], multi ? tot : values[i], total);
+                            var label = chartinst.labelise(labels[i], multi ? tot : values[i], valuesMax);
 
                             // If there are multibars, the bars array is a multiarray
                             L = paper.text(multi ? bars[j][i].x : bars[i].x, isBottom ? y + height - barvgutter / 2 : multi ? bars[j][i].y : bars[i].y - 10, label).attr(opts.txtattr).insertBefore(covers[i * (multi || 1) + j]);
@@ -456,7 +458,7 @@
                 for (var i = 0; i < len; i++) {
                     // Loop over the multi-array series
                     for (var j = 0; j < (multi || 1); j++) {
-                        var label = chartinst.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
+                        var label = chartinst.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], valuesMax);
 
                         L = paper.text(multi ? bars[j][i].x : bars[i].x, isBottom ? y + height - barvgutter / 2 : multi ? bars[j][i].y : bars[i].y - 10, label).attr(opts.txtattr).insertBefore(covers[i * (multi || 1) + j]);
 
