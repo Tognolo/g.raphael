@@ -201,15 +201,19 @@
             stretch: false, 
             type: "square",
             txtattr: { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
+            txtattrLabels: { font: "16px 'Fontin Sans', Fontin-Sans, sans-serif", "font-weight": "bold" },
             colors: this.colors,
             axis: {
                 x: {
                     visible: false,
-                    labels: []
+                    labels: [],
+                    labelWidth: 15,
+                    title: null
                 }, 
                 y: {
                     visible: false,
-                    labelWidth: 15
+                    labelWidth: 15,
+                    title: null
                 }
             },
             gutter: "20%",
@@ -232,15 +236,21 @@
             stacktotal = [],
             // Sub-arrays number
             multi = 0,                                  
-            // Space for Y axis and labels
-            axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth || 15 : 0, 
+            // Space for X&Y axis and labels
+            axisx_space, axisy_space, 
             // Data length
-            len = values.length;                        
-
+            len = values.length;
 
         //////////////////////
         // Calculate params //
         //////////////////////
+        
+        // Calculate axes space for labels and values
+        axisx_space = opts.axis.x.label != 'undefined' ? opts.axis.x.labelWidth : 0;
+        axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth : 0;
+        axisy_space = opts.axis.y.label != 'undefined' ? axisy_space + opts.axis.y.labelWidth : axisy_space;
+
+
         if (Raphael.is(values[0], "array")) {
             // If values is multiarray, save the sub-arrays' count and get the longest sub-array's length
             valuesMax = [];
@@ -283,7 +293,7 @@
             barvgutter = opts.vgutter == null ? 20 : opts.vgutter,
             stack = [],
             X = x + barhgutter + axisy_space,
-            Y = (height - 2 * barvgutter) / valuesMax;
+            Y = (height - 2 * barvgutter - axisx_space) / valuesMax;
 
         if (!opts.stretch) {
             barhgutter = Math.round(barhgutter);
@@ -294,7 +304,7 @@
 
 
         ///////////////
-        // Draw axis //
+        // Draw axes //
         ///////////////
         if (opts.axis.x.visible) {
             // If label array exists (labelsExist) then add the necessary space
@@ -310,7 +320,7 @@
             axis.push(chartinst.axis(
                 X - 0.5 * barhgutter,                       // x
                 y + height - barvgutter,                    // y
-                width - 1 * barhgutter - axisy_space,       // length
+                width - barhgutter - axisy_space,           // length
                 0,                                          // from
                 len,                                        // to
                 (labelsArrayExist ? opts.axis.x.labels.length : opts.axis.x.step || len) * 2,     // steps
@@ -334,6 +344,21 @@
             ));
         }
 
+        ///////////////////////
+        // Write axes labels //
+        ///////////////////////
+        if (opts.axis.x.label != 'undefined') { 
+            paper.text(
+            (x + width)/2,
+            (y + height),
+            opts.axis.x.label).attr(opts.txtattrLabels);
+        }
+        if (opts.axis.y.label != 'undefined') { 
+            paper.text(
+            X - axisy_space - 0.5 * barhgutter, 
+            (y + height)/2,
+            opts.axis.y.label).attr(opts.txtattrLabels).attr({transform: "r270"});
+        }
 
         ///////////////////
         // Draw the bars //
