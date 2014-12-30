@@ -136,18 +136,25 @@
     }
 
     /**
-     *  Courtesy of Stack Overflow
      *  Given a series of objects, return a merged object 
      */
     var merge = function() {
-        var obj = {},
+        var obj = {},   // The merged object
             i = 0,
             il = arguments.length,
             key;
+
+        // Loop over objects
         for (; i < il; i++) {
+            // Loop over object's keys
             for (key in arguments[i]) {
                 if (arguments[i].hasOwnProperty(key)) {
-                    obj[key] = arguments[i][key];
+                    if (!(arguments[i][key] === null) && arguments[i][key].constructor === Object) {
+                        obj[key] = merge(obj[key], arguments[i][key]);
+                    }
+                    else{
+                        obj[key] = arguments[i][key];
+                    }
                 }
             }
         }
@@ -246,9 +253,9 @@
         //////////////////////
         
         // Calculate axes space for labels and values
-        axisx_space = opts.axis.x.label != 'undefined' ? opts.axis.x.labelWidth : 0;
+        axisx_space = opts.axis.x.title != 'undefined' ? opts.axis.x.labelWidth : 0;
         axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth : 0;
-        axisy_space = opts.axis.y.label != 'undefined' ? axisy_space + opts.axis.y.labelWidth : axisy_space;
+        axisy_space = opts.axis.y.title != 'undefined' ? axisy_space + opts.axis.y.labelWidth : axisy_space;
 
 
         if (Raphael.is(values[0], "array")) {
@@ -345,19 +352,19 @@
         }
 
         ///////////////////////
-        // Write axes labels //
+        // Write axes titles //
         ///////////////////////
-        if (opts.axis.x.label != 'undefined') { 
+        if (opts.axis.x.title != 'undefined') { 
             paper.text(
             (x + width)/2,
             (y + height),
-            opts.axis.x.label).attr(opts.txtattrLabels);
+            opts.axis.x.title).attr(opts.txtattrLabels);
         }
-        if (opts.axis.y.label != 'undefined') { 
+        if (opts.axis.y.title != 'undefined') { 
             paper.text(
             X - axisy_space - 0.5 * barhgutter, 
             (y + height)/2,
-            opts.axis.y.label).attr(opts.txtattrLabels).attr({transform: "r270"});
+            opts.axis.y.title).attr(opts.txtattrLabels).attr({transform: "r270"});
         }
 
         ///////////////////
