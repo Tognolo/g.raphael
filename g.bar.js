@@ -214,7 +214,7 @@
                 x: {
                     visible: false,
                     labels: [],
-                    labelWidth: 15,
+                    labelWidth: 10,
                     title: null
                 }, 
                 y: {
@@ -253,9 +253,10 @@
         //////////////////////
         
         // Calculate axes space for labels and values
-        axisx_space = opts.axis.x.title != 'undefined' ? opts.axis.x.labelWidth : 0;
+        axisx_space = 0;
+        axisx_space = opts.axis.x.title != null ? axisx_space + opts.axis.x.labelWidth : axisx_space;
         axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth : 0;
-        axisy_space = opts.axis.y.title != 'undefined' ? axisy_space + opts.axis.y.labelWidth : axisy_space;
+        axisy_space = opts.axis.y.title != null ? axisy_space + opts.axis.y.labelWidth : axisy_space;
 
 
         if (Raphael.is(values[0], "array")) {
@@ -295,12 +296,18 @@
         
         valuesMax = (opts.to) || valuesMax;
 
-        var barwidth = (width - axisy_space) / (len * (100 + opts.gutter) + opts.gutter) * 100,
-            barhgutter = barwidth * opts.gutter / 100,
-            barvgutter = opts.vgutter == null ? 20 : opts.vgutter,
+        var barwidth = Math.round((width - axisy_space) / (len * (100 + opts.gutter) + opts.gutter) * 100),
+            barhgutter = Math.round(barwidth * opts.gutter / 100),
+            barvgutter = Math.round(opts.vgutter == null ? 20 : opts.vgutter),
             stack = [],
+            // Graph position & size references
+            graphOrigin_x = x + 0.5 * barhgutter + axisy_space,
+            graphOrigin_y = y + height - barvgutter - axisx_space,
+            graphWidth = width - barhgutter - axisy_space,
+            graphHeight = height - 2 * barvgutter - axisx_space,
+            // Graph unit values
             X = x + barhgutter + axisy_space,
-            Y = (height - 2 * barvgutter - axisx_space) / valuesMax;
+            Y = (graphHeight) / valuesMax;
 
         if (!opts.stretch) {
             barhgutter = Math.round(barhgutter);
@@ -314,7 +321,7 @@
         // Draw axes //
         ///////////////
         if (opts.axis.x.visible) {
-            // If label array exists (labelsExist) then add the necessary space
+            // If label array exists then add the necessary space
             // and create a special array for labels
             var labelsArrayExist = typeof opts.axis.x.labels != 'undefined' && opts.axis.x.labels instanceof Array;
             if (labelsArrayExist) {
@@ -325,9 +332,9 @@
                 };
             }
             axis.push(chartinst.axis(
-                X - 0.5 * barhgutter,                       // x
-                y + height - barvgutter,                    // y
-                width - barhgutter - axisy_space,           // length
+                graphOrigin_x,                              // x
+                graphOrigin_y,                              // y
+                graphWidth,                                 // length
                 0,                                          // from
                 len,                                        // to
                 (labelsArrayExist ? opts.axis.x.labels.length : opts.axis.x.step || len) * 2,     // steps
@@ -340,9 +347,9 @@
         }
         if (opts.axis.y.visible) {
             axis.push(chartinst.axis(
-                X - 0.5 * barhgutter,                       // x
-                y + height - barvgutter,                    // y
-                height - 2 * barvgutter,                    // length
+                graphOrigin_x,                              // x
+                graphOrigin_y,                              // y
+                graphHeight,                                // length
                 0,                                          // from
                 valuesMax,                                  // to
                 opts.axisystep || Math.floor((height - 2 * opts.gutter) / 20),  // steps
@@ -354,13 +361,13 @@
         ///////////////////////
         // Write axes titles //
         ///////////////////////
-        if (opts.axis.x.title != 'undefined') { 
+        if (opts.axis.x.title != null) { 
             paper.text(
             (x + width)/2,
-            (y + height),
+            (y + height - 0.5 * opts.axis.x.labelWidth),
             opts.axis.x.title).attr(opts.txtattrLabels);
         }
-        if (opts.axis.y.title != 'undefined') { 
+        if (opts.axis.y.title != null) { 
             paper.text(
             X - axisy_space - 0.5 * barhgutter, 
             (y + height)/2,
@@ -375,7 +382,7 @@
 
             for (var j = 0; j < (multi || 1); j++) {
                 var h = Math.round((multi ? values[j][i] : values[i]) * Y),
-                    top = y + height - barvgutter - h,
+                    top = y + height - barvgutter - h - axisx_space,
                     bar = finger(Math.round(X + barwidth / 2), top + h, barwidth, h, true, opts.type, null, paper).attr({ stroke: "none", fill: opts.colors[multi ? j : i] });
 
                 if (multi) {
