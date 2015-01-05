@@ -35,10 +35,16 @@
 	                r.barchart(10, 10, 620, 460, [data], {
 	                    stacked: true, 
 	                    stretch: true, 
-	                    axis: "0 0 0 0", 
+    	                axis: {
+                            x: {
+                                visible: true
+                            }, 
+                            y: {
+                                visible: true   
+                            }
+                        },
 	                    gutter: "0",
 	                    vgutter: "20",
-	                    axisxstep: 1
 	                }).hover(fin, fout);
                 	setTimeout(function () {draw((new Date).getTime());}, 1);
                 }
