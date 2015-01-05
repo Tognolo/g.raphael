@@ -213,7 +213,7 @@
             axis: {
                 x: {
                     visible: false,
-                    labels: [],
+                    labels: null,
                     labelWidth: 10,
                     title: null
                 }, 
@@ -253,10 +253,10 @@
         //////////////////////
         
         // Calculate axes space for labels and values
-        axisx_space = 0;
-        axisx_space = opts.axis.x.title != null ? axisx_space + opts.axis.x.labelWidth : axisx_space;
+        axisx_space = opts.axis.x.visible ? opts.axis.x.labelWidth : 0;
+        axisx_space = opts.axis.x.title != null ? axisx_space + 2 * opts.axis.x.labelWidth : axisx_space;
         axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth : 0;
-        axisy_space = opts.axis.y.title != null ? axisy_space + opts.axis.y.labelWidth : axisy_space;
+        axisy_space = opts.axis.y.title != null ? axisy_space + 1.5 * opts.axis.y.labelWidth : axisy_space;
 
 
         if (Raphael.is(values[0], "array")) {
@@ -296,18 +296,19 @@
         
         valuesMax = (opts.to) || valuesMax;
 
-        var barwidth = Math.round((width - axisy_space) / (len * (100 + opts.gutter) + opts.gutter) * 100),
-            barhgutter = Math.round(barwidth * opts.gutter / 100),
-            barvgutter = Math.round(opts.vgutter == null ? 20 : opts.vgutter),
-            stack = [],
             // Graph position & size references
-            graphOrigin_x = x + 0.5 * barhgutter + axisy_space,
-            graphOrigin_y = y + height - barvgutter - axisx_space,
-            graphWidth = width - barhgutter - axisy_space,
-            graphHeight = height - 2 * barvgutter - axisx_space,
+        var graphOrigin_x = x + axisy_space,
+            graphOrigin_y = y + height - axisx_space,
+            graphWidth = Math.round((width - axisy_space)/len) * len,
+            graphHeight = height - axisx_space,
+            barSpace = Math.round(graphWidth / len),    // The space for the bar (barWidth + barhgutter)
+            barhgutter = Math.round(barSpace * opts.gutter / 100),
+            barwidth = barSpace - barhgutter,
+            barvgutter = 0,
+            stack = [];
             // Graph unit values
-            X = x + barhgutter + axisy_space,
-            Y = (graphHeight) / valuesMax;
+            X = graphOrigin_x + 0.5 * barhgutter,
+            Y = (graphHeight) / valuesMax;            
 
         if (!opts.stretch) {
             barhgutter = Math.round(barhgutter);
@@ -337,11 +338,11 @@
                 graphWidth,                                 // length
                 0,                                          // from
                 len,                                        // to
-                (labelsArrayExist ? opts.axis.x.labels.length : opts.axis.x.step || len) * 2,     // steps
+                labelsArrayExist ? opts.axis.x.labels.length * 2 : opts.axis.x.step || len,     // steps
                 0,                                          // orientation
                 labelsArrayExist ? labelArraySpaced : [],   // labels,
-                "t",
-                0,
+                labelsArrayExist ? "t" : undefined,
+                labelsArrayExist ? 0 : undefined,
                 paper                                       // paper
             ));
         }
