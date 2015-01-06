@@ -30,26 +30,25 @@
                     },
                     txtattr = { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" };
                 
-                r.text(160, 10, "Single Series Chart").attr(txtattr);
-                r.text(480, 10, "Multiline Series Chart").attr(txtattr);
+                r.text(160, 10, "Single Series Chart with Axes & Titles").attr(txtattr);
+                r.text(480, 10, "Multiline Series Chart with Axes & Labels").attr(txtattr);
                 r.text(160, 250, "Multiline Series Stacked Chart").attr(txtattr);
-                r.text(480, 250, "Multiline Series Stacked Chart\nColumn Hover").attr(txtattr);
+                r.text(480, 250, "Multiline Series Stacked Chart\nColumn Hover with Axes").attr(txtattr);
                 
-                r.barchart(10, 10, 300, 220, [[55, 20, 13, 32, 5, 1, 2, 10]],{
+                r.barchart(15, 15, 290, 210, [[55, 20, 13, 32, 5, 1, 2, 10]],{
                     axis:{x:{visible: true,
-                            labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
                             title: "X axis"}, 
                         y:{visible: true,
                             title: "Y axis" }}
                 }).hover(fin, fout);
-                r.hbarchart(10, 250, 300, 220, [[55, 20, 13, 32, 5, 1, 2, 10], [10, 2, 1, 5, 32, 13, 20, 55]], {
+                r.hbarchart(15, 255, 290, 210, [[55, 20, 13, 32, 5, 1, 2, 10], [10, 2, 1, 5, 32, 13, 20, 55]], {
                     stacked: true,
                     axis:{x:{visible: true}, y:{visible: true}}
                 }).hover(fin, fout);
-                r.barchart(330, 10, 300, 220, [[55, 20, 13, 32, 5, 1, 2, 10, 10, 2, 1, 5, 32, 13, 20, 55]],{
-                    axis:{x:{visible: true, labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']}, y:{visible: true}}
+                r.barchart(335, 15, 290, 210, [[55, 20, 13, 32, 5, 1, 2, 10, 10, 2, 1, 5, 32, 13, 20, 55]],{
+                    axis:{x:{visible: true, labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p']}, y:{visible: true}}
                 });
-                r.barchart(330, 250, 300, 220, [[55, 20, 13, 32, 5, 1, 2, 10], [10, 2, 1, 5, 32, 13, 20, 55]], {
+                r.barchart(335, 255, 290, 210, [[55, 20, 13, 32, 5, 1, 2, 10], [10, 2, 1, 5, 32, 13, 20, 55]], {
                     stacked: true, type: "soft",
                     axis:{x:{visible: true}, y:{visible: true}}
                 }).hoverColumn(fin2, fout2);

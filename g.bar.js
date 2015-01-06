@@ -252,13 +252,6 @@
         // Calculate params //
         //////////////////////
         
-        // Calculate axes space for labels and values
-        axisx_space = opts.axis.x.visible ? opts.axis.x.labelWidth : 0;
-        axisx_space = opts.axis.x.title != null ? axisx_space + 2 * opts.axis.x.labelWidth : axisx_space;
-        axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth : 0;
-        axisy_space = opts.axis.y.title != null ? axisy_space + 1.5 * opts.axis.y.labelWidth : axisy_space;
-
-
         if (Raphael.is(values[0], "array")) {
             // If values is multiarray, save the sub-arrays' count and get the longest sub-array's length
             valuesMax = [];
@@ -296,18 +289,23 @@
         
         valuesMax = (opts.to) || valuesMax;
 
-            // Graph position & size references
-        var graphOrigin_x = x + axisy_space,
+        // Calculate axes space for labels and values
+        axisx_space = opts.axis.x.visible ? opts.axis.x.labelWidth : 0;
+        axisx_space = opts.axis.x.title != null ? axisx_space + 2 * opts.axis.x.labelWidth : axisx_space;
+        axisy_space = opts.axis.y.visible ? opts.axis.y.labelWidth : 0;
+        axisy_space = opts.axis.y.title != null ? axisy_space + 1.5 * opts.axis.y.labelWidth : axisy_space;
+
+        // Graph position & size references
+        var graphOrigin_x = x + axisy_space,                            // Graph origin's coordinate
             graphOrigin_y = y + height - axisx_space,
-            graphWidth = Math.round((width - axisy_space)/len) * len,
+            graphWidth = Math.round((width - axisy_space)/len) * len,   // Graph sizes
             graphHeight = height - axisx_space,
-            barSpace = Math.round(graphWidth / len),    // The space for the bar (barWidth + barhgutter)
-            barhgutter = Math.round(barSpace * opts.gutter / 100),
+            barSpace = Math.round(graphWidth / len),                    // Space for the bar (barWidth + barhgutter)
+            barhgutter = Math.round(barSpace * opts.gutter / 100),      // Gutter between bars as proportion of barSpace
             barwidth = barSpace - barhgutter,
-            barvgutter = 0,
+            barvgutter = 0,                                             // Gutter between bars and x-axis (useless)
             stack = [];
-            // Graph unit values
-            X = graphOrigin_x + 0.5 * barhgutter,
+            X = graphOrigin_x + 0.5 * barhgutter,                       // Graph unit values
             Y = (graphHeight) / valuesMax;            
 
         if (!opts.stretch) {
@@ -383,7 +381,7 @@
 
             for (var j = 0; j < (multi || 1); j++) {
                 var h = Math.round((multi ? values[j][i] : values[i]) * Y),
-                    top = y + height - barvgutter - h - axisx_space,
+                    top = graphOrigin_y - barvgutter - h,
                     bar = finger(Math.round(X + barwidth / 2), top + h, barwidth, h, true, opts.type, null, paper).attr({ stroke: "none", fill: opts.colors[multi ? j : i] });
 
                 if (multi) {
@@ -421,12 +419,12 @@
                     var bar = stack[s],
                         cover,
                         h = (size + bar.value) * Y,
-                        path = finger(bar.x, y + height - barvgutter - !!size * .5, barwidth, h, true, opts.type, 1, paper);
+                        path = finger(bar.x, graphOrigin_y - barvgutter - !!size * .5, barwidth, h, true, opts.type, 1, paper);
 
                     cvr.bars.push(bar);
                     size && bar.attr({path: path});
                     bar.h = h;
-                    bar.y = y + height - barvgutter - !!size * .5 - h;
+                    bar.y = graphOrigin_y - barvgutter - !!size * .5 - h;
                     covers.push(cover = paper.rect(bar.x - bar.w / 2, bar.y, barwidth, bar.value * Y).attr(chartinst.shim));
                     cover.bar = bar;
                     cover.value = bar.value;
