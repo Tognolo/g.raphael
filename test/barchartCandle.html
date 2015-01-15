@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>g·Raphaël Static Bar Charts</title>
+        <link rel="stylesheet" href="css/demo.css" type="text/css" media="screen" charset="utf-8">
+        <link rel="stylesheet" href="css/demo-print.css" type="text/css" media="print" charset="utf-8">
+        <script src="../raphael-min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../g.raphael.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../g.bar.js" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript" charset="utf-8">
+            window.onload = function () {
+                var r = Raphael("holder"),
+                    data = [[55, 20, 30, 2],[105, 32, 70, 5], [15, 40, 20, 2], [12, 56, 50, 3], [72, 10, 60, 5], [2, 89, 50, 20], [5, 32], [43, 20]],
+                    txtattr = { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
+
+                    fin = function () {
+                        this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
+                    },
+                    fout = function () {
+                        this.flag.animate({opacity: 0}, 300, function () {this.remove();});
+                    },
+                    click = function() {
+                        console.log(this.bar.position);
+                    };
+
+                
+                r.barchart(10, 10, 790, 590, data, {
+                    minmax: {
+                        enable: true
+                    },
+                    axis: {
+                        x: {
+                            visible: true,
+                            title: "Asse x"
+                        }, 
+                        y: {
+                            visible: true,
+                            title: "Asse y"
+                        }
+                    }
+                }).click(click);
+
+                r.text(320, 10, "Stacked bar with axis").attr(txtattr);
+                
+            };
+        </script>
+    </head>
+    <body class="raphael" id="g.raphael.dmitry.baranovskiy.com">
+        <div id="holder"></div>
+        <p>
+            Demo of <a href="http://g.raphaeljs.com/">g·Raphaël</a> JavaScript library. Simone Tognolo edited version.
+        </p>
+    </body>
+</html>

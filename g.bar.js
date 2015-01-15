@@ -176,13 +176,13 @@
  - values (array) values
  - opts (object) options for the chart
  o {
- o type (string) type of endings of the bar. Default: 'square'. Other options are: 'round', 'sharp', 'soft'.
- o gutter (number)(string) the space between columns
- o vgutter (number)
- o colors (array) colors be used repeatedly to plot the bars. If multicolumn bar is used each sequence of bars with use a different color.
  o stacked (boolean) whether or not to tread values as in a stacked bar chart
- o to
- o stretch (boolean)
+ o minmax:{
+ o   enable (boolean) whether or not to tread values as in a Min-Max bar chart (cannot create multibar graph if minmax is true)
+ o }
+ o type (string) type of endings of the bar. Default: 'square'. Other options are: 'round', 'sharp', 'soft'.
+ o gutter (number)(string) default '20%' space between bars
+ o colors (array) colors be used repeatedly to plot the bars. If multicolumn bar is used each sequence of bars with use a different color.
  o axis: {
  o   x: {
  o       visible: (boolean),
@@ -192,20 +192,25 @@
  o       visible: (boolean),
  o       labelWidth: (integer)
  o   }
-}
  o }
  **
  = (object) path element of the popup
  > Usage
  | r.vbarchart(0, 0, 620, 260, [76, 70, 67, 71, 69], {})
+ | r.vbarchart(0, 0, 620, 260, [[76, 70], [67, 71], [69, 15]], {minmax: {enable: true}}) (for each column, [min, max])
+ | r.vbarchart(0, 0, 620, 260, [[76, 70, 73, 1]] {minmax: {enable: true}}) (for each column, [min, max, mean, stdev])
  \*/
  
     function VBarchart(paper, x, y, width, height, values, opts) {
 
         // Default values for the options 
         var optsDefault = {
-            stacked: false, 
-            stretch: false, 
+            stacked: false,
+            minmax: {
+                enable: false,
+                lineWidth: 3,
+                sigma: 1
+            },
             type: "square",
             txtattr: { font: "12px 'Fontin Sans', Fontin-Sans, sans-serif" },
             txtattrLabels: { font: "16px 'Fontin Sans', Fontin-Sans, sans-serif", "font-weight": "bold" },
@@ -220,7 +225,9 @@
                 y: {
                     visible: false,
                     labelWidth: 15,
-                    title: null
+                    title: null,
+                    from: null,
+                    to: null
                 }
             },
             gutter: "20%",
@@ -230,6 +237,10 @@
         // Merge & fix options data
         opts = merge(optsDefault, opts);
         opts.gutter = parseFloat(opts.gutter)
+        if (opts.stacked && opts.minmax.enable){
+            opts.stacked = false;
+            alert ("Graph cannot be Stacked and MinMax. Change options setting");
+        }
 
         var chartinst = this,
             chart = paper.set(),
@@ -245,6 +256,8 @@
             multi = 0,                                  
             // Space for X&Y axis and labels
             axisx_space, axisy_space, 
+            // Bar position
+            barPosition = 0,
             // Data length
             len = values.length;
 
@@ -255,12 +268,14 @@
         if (Raphael.is(values[0], "array")) {
             // If values is multiarray, save the sub-arrays' count and get the longest sub-array's length
             valuesMax = [];
+            valuesMin = [];
             multi = len;
             len = 0;
 
             for (var i = values.length; i--;) {
                 bars.push(paper.set());
                 valuesMax.push(Math.max.apply(Math, values[i]));
+                valuesMin.push(Math.min.apply(Math, values[i]));
                 len = Math.max(len, values[i].length);
             }
 
@@ -285,9 +300,18 @@
             }
 
             valuesMax = Math.max.apply(Math, opts.stacked ? stacktotal : valuesMax);
+            valuesMin = Math.min.apply(Math, opts.stacked ? stacktotal : valuesMin);
         }
-        
-        valuesMax = (opts.to) || valuesMax;
+
+        if (!opts.minmax.enable) valuesMin = 0;
+        valuesMin = opts.axis.y.from != null ? opts.axis.y.from : valuesMin
+        valuesMax = opts.axis.y.to != null ? opts.axis.y.to : valuesMax
+        var valuesRange = valuesMax - valuesMin;
+
+        if (opts.minmax.enable) {
+            len = multi;
+            multi = 1;
+        }
 
         // Calculate axes space for labels and values
         axisx_space = opts.axis.x.visible ? opts.axis.x.labelWidth : 0;
@@ -306,12 +330,7 @@
             barvgutter = 0,                                             // Gutter between bars and x-axis (useless)
             stack = [];
             X = graphOrigin_x + 0.5 * barhgutter,                       // Graph unit values
-            Y = (graphHeight) / valuesMax;            
-
-        if (!opts.stretch) {
-            barhgutter = Math.round(barhgutter);
-            barwidth = Math.floor(barwidth);
-        }
+            Y = (graphHeight) / valuesRange;            
 
         !opts.stacked && (barwidth /= multi || 1);
 
@@ -349,7 +368,7 @@
                 graphOrigin_x,                              // x
                 graphOrigin_y,                              // y
                 graphHeight,                                // length
-                0,                                          // from
+                valuesMin,                                  // from
                 valuesMax,                                  // to
                 opts.axisystep || Math.floor((height - 2 * opts.gutter) / 20),  // steps
                 1,                                          // orientation
@@ -378,23 +397,65 @@
         ///////////////////
         for (var i = 0; i < len; i++) {
             stack = [];
-
             for (var j = 0; j < (multi || 1); j++) {
-                var h = Math.round((multi ? values[j][i] : values[i]) * Y),
-                    top = graphOrigin_y - barvgutter - h,
-                    bar = finger(Math.round(X + barwidth / 2), top + h, barwidth, h, true, opts.type, null, paper).attr({ stroke: "none", fill: opts.colors[multi ? j : i] });
+                if (opts.minmax.enable){
+                    // Check if mean and standard deviation are present
+                    var candleStickStyle = false;
+                    if (values[i][2] && values[i][3]) {candleStickStyle = true;}
 
-                if (multi) {
+                    // Min-Max bar
+                    var barMax = Math.max(values[i][0], values[i][1]),
+                        barMin = Math.min(values[i][0], values[i][1]),
+                        h = Math.round((barMax - barMin) * Y),
+                        top = graphOrigin_y - barvgutter - h + (valuesMin - barMin) * Y,
+                        bar = finger(
+                            Math.round(X + barwidth / 2), top + h, 
+                            candleStickStyle ? opts.minmax.lineWidth: barwidth, h, 
+                            true, opts.type, null, paper).attr({ stroke: "#000", "stroke-width": 2, 
+                            fill: candleStickStyle ? "#000" : opts.colors[0] }
+                        );
+                    // Sigma-dev bar
+                    if (candleStickStyle) {
+                        var barMax = values[i][2] + values[i][3],
+                            barMin = values[i][2] - values[i][3],
+                            h = Math.round((barMax - barMin) * Y),
+                            top = graphOrigin_y - barvgutter - h + (valuesMin - barMin) * Y;
+                            
+                        finger(
+                            Math.round(X + barwidth / 2), top + h, 
+                            barwidth, h, 
+                            true, opts.type, null, paper).attr({ stroke: "#000", "stroke-width": 2, fill: opts.colors[0] }
+                        );
+                    }
                     bars[j].push(bar);
-                } else {
-                    bars.push(bar);
-                }
 
-                bar.y = top;
-                bar.x = Math.round(X + barwidth / 2);
-                bar.w = barwidth;
-                bar.h = h;
-                bar.value = multi ? values[j][i] : values[i];
+                    bar.x = Math.round(X + barwidth / 2);
+                    bar.y = top + h;
+                    bar.w = barwidth;
+                    bar.h = h;
+                    bar.min = barMin;
+                    bar.max = barMax;
+                    bar.value = barMax;
+                    bar.position = barPosition++;
+                } else {
+
+                    var h = Math.round((multi ? values[j][i] : values[i]) * Y),
+                        top = graphOrigin_y - barvgutter - h,
+                        bar = finger(Math.round(X + barwidth / 2), top + h, barwidth, h, true, opts.type, null, paper).attr({ stroke: "#000", "stroke-width": 2, fill: opts.colors[multi ? j : i] });
+
+                    if (multi) {
+                        bars[j].push(bar);
+                    } else {
+                        bars.push(bar);
+                    }
+
+                    bar.y = top + h;
+                    bar.x = Math.round(X + barwidth / 2);
+                    bar.w = barwidth;
+                    bar.h = h;
+                    bar.value = multi ? values[j][i] : values[i];
+                    bar.position = barPosition++;
+                }
 
                 if (!opts.stacked) {
                     X += barwidth;
@@ -436,6 +497,7 @@
 
             X += barhgutter;
         }
+        
 
         covers2.toFront();
         X = x + barhgutter;
@@ -599,7 +661,6 @@
  o colors (array) colors be used repeatedly to plot the bars. If multicolumn bar is used each sequence of bars with use a different color.
  o stacked (boolean) whether or not to tread values as in a stacked bar chart
  o to
- o stretch (boolean)
  o }
  **
  = (object) path element of the popup
