@@ -763,10 +763,11 @@ Raphael.g = {
         return { from: f, to: t, power: i };
     },
 
-    axis: function (x, y, length, from, to, steps, orientation, labels, type, dashsize, paper) {
+    axis: function (x, y, length, from, to, steps, orientation, labels, type, dashsize, txtattr, paper) {
         dashsize = dashsize == null ? 2 : dashsize;
         type = type || "t";
         steps = steps || 10;
+        txtattr = txtattr || { font: "11px 'Fontin Sans', Fontin-Sans, sans-serif" };
         paper = arguments[arguments.length-1] //paper is always last argument
 
         var path = type == "|" || type == " " ? ["M", x + .5, y, "l", 0, .001] : orientation == 1 || orientation == 3 ? ["M", x + .5, y, "l", 0, -length] : ["M", x, y + .5, "l", length, 0],
@@ -775,7 +776,6 @@ Raphael.g = {
             t = ends.to,
             i = ends.power,
             j = 0,
-            txtattr = { font: "11px 'Fontin Sans', Fontin-Sans, sans-serif" },
             text = paper.set(),
             d;
 
@@ -857,5 +857,27 @@ Raphael.g = {
         } else {
             return (+val).toFixed(0);
         }
+    },
+
+    lighter: function (RGBcolor, times) {
+        times = times || 2;
+        times < 1 ? 1 : times
+
+        RGBcolor = Raphael.rgb2hsb(Raphael.getRGB(RGBcolor).hex);
+        RGBcolor.b = Math.min(RGBcolor.b * times, 1);
+        RGBcolor.s = RGBcolor.s / times;
+
+        return "hsb(" + [RGBcolor.h, RGBcolor.s, RGBcolor.b] + ")";
+    },
+
+    darker: function (RGBcolor, times) {
+        times = times || 2;
+        times < 1 ? 1 : times
+
+        RGBcolor = Raphael.rgb2hsb(Raphael.getRGB(RGBcolor).hex);
+        RGBcolor.s = Math.min(RGBcolor.s * times, 1);
+        RGBcolor.b = RGBcolor.b / times;
+
+        return "hsb(" + [RGBcolor.h, RGBcolor.s, RGBcolor.b] + ")";
     }
 }
