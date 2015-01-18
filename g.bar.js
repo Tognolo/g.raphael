@@ -220,12 +220,14 @@
                     visible: false,
                     labels: null,
                     labelWidth: 10,
+                    step: null,
                     title: null
                 }, 
                 y: {
                     visible: false,
                     labelWidth: 15,
                     title: null,
+                    step: null,
                     from: null,
                     to: null
                 }
@@ -256,7 +258,7 @@
             multi = 0,                                  
             // Space for X&Y axis and labels
             axisx_space, axisy_space, 
-            // Bar position
+            // Bar index over all the bars
             barPosition = 0,
             // Data length
             len = values.length;
@@ -360,6 +362,7 @@
                 labelsArrayExist ? labelArraySpaced : [],   // labels,
                 labelsArrayExist ? "t" : undefined,
                 labelsArrayExist ? 0 : undefined,
+                opts.txtattr,                               // label attribute
                 paper                                       // paper
             ));
         }
@@ -370,8 +373,12 @@
                 graphHeight,                                // length
                 valuesMin,                                  // from
                 valuesMax,                                  // to
-                opts.axisystep || Math.floor((height - 2 * opts.gutter) / 20),  // steps
+                opts.axis.y.step || Math.floor((height - 2 * opts.gutter) / 20),  // steps
                 1,                                          // orientation
+                undefined,
+                undefined,
+                undefined,
+                opts.txtattr,                               // label attribute
                 paper
             ));
         }
@@ -411,9 +418,10 @@
                         bar = finger(
                             Math.round(X + barwidth / 2), top + h, 
                             candleStickStyle ? opts.minmax.lineWidth: barwidth, h, 
-                            true, opts.type, null, paper).attr({ stroke: "#000", "stroke-width": 2, 
-                            fill: candleStickStyle ? "#000" : opts.colors[0] }
-                        );
+                            true, opts.type, null, paper).attr({ 
+                                stroke: "#000", "stroke-width": 2, 
+                                fill: candleStickStyle ? "#000" : opts.colors[0] 
+                            });
                     // Sigma-dev bar
                     if (candleStickStyle) {
                         var barMax = values[i][2] + values[i][3],
@@ -424,8 +432,10 @@
                         finger(
                             Math.round(X + barwidth / 2), top + h, 
                             barwidth, h, 
-                            true, opts.type, null, paper).attr({ stroke: "#000", "stroke-width": 2, fill: opts.colors[0] }
-                        );
+                            true, opts.type, null, paper).attr({ 
+                                stroke: "#000", "stroke-width": 2, 
+                                fill: opts.colors[0] 
+                            });
                     }
                     bars[j].push(bar);
 
@@ -440,8 +450,14 @@
                 } else {
 
                     var h = Math.round((multi ? values[j][i] : values[i]) * Y),
-                        top = graphOrigin_y - barvgutter - h,
-                        bar = finger(Math.round(X + barwidth / 2), top + h, barwidth, h, true, opts.type, null, paper).attr({ stroke: "#000", "stroke-width": 2, fill: opts.colors[multi ? j : i] });
+                        top = graphOrigin_y - h,
+                        bar = finger(
+                            Math.round(X + barwidth / 2), graphOrigin_y, 
+                            barwidth, h, 
+                            true, opts.type, null, paper).attr({ 
+                                stroke: chartinst.darker(opts.colors[multi ? j : i], 1,5), "stroke-width": 2, 
+                                fill: opts.colors[multi ? j : i], "fill-opacity": 0.7 
+                            });
 
                     if (multi) {
                         bars[j].push(bar);
